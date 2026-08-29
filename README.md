@@ -41,7 +41,37 @@ python bot.py
 
 Message your bot on Telegram — it should respond immediately.
 
-## 3. Deploy on a VPS (24/7)
+## 3. Deploy on Render.com (free option)
+
+Render's free tier only applies to **Web Services** (things that respond to HTTP), not
+Background Workers (those start at $7/mo). Since this bot just polls Telegram, `render_app.py`
+adds a tiny health-check web server alongside it so Render's free tier accepts it as a Web
+Service.
+
+**Steps:**
+1. Push this folder to a GitHub repository.
+2. On [render.com](https://render.com), click **New +** → **Web Service**, connect your repo.
+3. Set:
+   - **Build Command**: `pip install -r requirements.txt`
+   - **Start Command**: `python render_app.py`
+   - **Instance Type**: Free
+4. Under **Environment**, add:
+   - `TELEGRAM_BOT_TOKEN` = your token
+   - `OPENROUTER_KEYS` = your key(s)
+5. Click **Deploy**. Once live, message your bot on Telegram to test it.
+
+**The catch with free Web Services:** Render spins them down after 15 minutes with no HTTP
+traffic, which would kill the bot's connection. Fix it for free with an uptime pinger:
+- Sign up free at [uptimerobot.com](https://uptimerobot.com)
+- Add a new HTTP(s) monitor pointed at your Render URL (shown on your service's dashboard),
+  checking every 5 minutes.
+- This keeps the health endpoint "warm" so Render never spins the service down.
+
+This combo (free Web Service + free uptime pinger) costs $0 but has a small risk of brief
+gaps. If you want guaranteed 24/7 uptime with no workarounds, upgrade that one service to
+Render's **Starter** plan (~$7/mo) — no code changes needed, just flip the instance type.
+
+## 4. Deploy on a VPS (24/7, paid but simple)
 
 Copy the folder to your server, repeat the setup above, then run it as a systemd service
 so it survives reboots and restarts on crash:

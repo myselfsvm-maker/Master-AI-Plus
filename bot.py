@@ -128,8 +128,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(f"{reply_text}\n\n— via {used_model_name}")
 
 
-def main():
-    db.init_db()
+def build_application():
+    """Builds (but does not run) the Telegram Application. Reused by main() below
+    and by render_app.py, which runs it alongside a small health-check web server."""
     if not config.TELEGRAM_BOT_TOKEN:
         raise SystemExit("Set TELEGRAM_BOT_TOKEN in your .env file")
     if not config.OPENROUTER_KEYS:
@@ -142,7 +143,13 @@ def main():
     app.add_handler(CommandHandler("status", status_cmd))
     app.add_handler(CommandHandler("image", image_cmd))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+    return app
 
+
+def main():
+    """Local / VPS entrypoint - simple blocking polling loop."""
+    db.init_db()
+    app = build_application()
     log.info("Bot starting...")
     app.run_polling()
 
